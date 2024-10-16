@@ -1,8 +1,6 @@
-Here is a `README.md` template for your GitHub repository, including instructions and R code for replicating the analysis in the study.
 
-```md
 # Replicating Early-Onset Type 2 Diabetes Analysis from NHANES Data (2001-2018)
-
+```md
 This repository contains the R code for replicating the analysis from the paper: **Race/Ethnicity and Other Predictors of Early-Onset Type 2 Diabetes Mellitus in the US Population**. The analysis uses data from the National Health and Nutrition Examination Survey (NHANES) from 2001 to 2018 to estimate the prevalence of early-onset type 2 diabetes (T2DM) and identify associated predictors using logistic regression and machine learning techniques.
 
 ## Table of Contents
