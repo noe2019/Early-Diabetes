@@ -1,107 +1,133 @@
+# Race/Ethnicity and Other Predictors of Early-Onset Type 2 Diabetes Mellitus in the US Population
 
-# Replicating Early-Onset Type 2 Diabetes Analysis from NHANES Data (2001-2018)
+This repository contains the R code used for the analysis described in the article *Race/Ethnicity and Other Predictors of Early-Onset Type 2 Diabetes Mellitus in the US Population*. The analysis is based on data from the National Health and Nutrition Examination Survey (NHANES) from 2001 to 2018.
+
 ## Table of Contents
 
-- [Overview](#overview)
-- [Data Requirements](#data-requirements)
-- [Installation](#installation)
-- [Data Preprocessing](#data-preprocessing)
-- [Logistic Regression Model](#logistic-regression-model)
-- [Machine Learning Models](#machine-learning-models)
-- [Visualization](#visualization)
-  - [Distribution Plots](#distribution-plots)
-  - [Odds Ratios](#odds-ratios)
-  - [Random Forest Feature Importance](#random-forest-feature-importance)
-  - [ROC Curve](#roc-curve)
-  - [Confusion Matrix](#confusion-matrix)
-  - [Other Plots](#other-plots)
+- [Abstract](#abstract)
+- [Objectives](#objectives)
+- [Methods](#methods)
+  - [Study Design and Participants](#study-design-and-participants)
+  - [Definition of Diabetes](#definition-of-diabetes)
+  - [Variables Under Study](#variables-under-study)
+  - [Data Analysis](#data-analysis)
+- [Results](#results)
+  - [Statistical Analysis](#statistical-analysis)
+  - [Machine Learning Models](#machine-learning-models)
+- [Plots and Visualizations](#plots-and-visualizations)
+- [Conclusions](#conclusions)
+- [Acknowledgements](#acknowledgements)
 - [License](#license)
 
-This repository contains the R code for replicating the analysis from the paper: **Race/Ethnicity and Other Predictors of Early-Onset Type 2 Diabetes Mellitus in the US Population**. The analysis uses data from the National Health and Nutrition Examination Survey (NHANES) from 2001 to 2018 to estimate the prevalence of early-onset type 2 diabetes (T2DM) and identify associated predictors using logistic regression and machine learning techniques.
+## Abstract
 
-## Overview
+The study aims to estimate the prevalence of early-onset type 2 diabetes mellitus (T2DM) in the U.S. and explore associations between early-onset T2DM and race/ethnicity, among other predictors. Using stepwise logistic regression and machine learning, the study identifies significant predictors for early-onset T2DM.
 
-This project aims to replicate the findings of a study that explores the relationship between race/ethnicity, socioeconomic factors, and early-onset type 2 diabetes. The study uses a combination of statistical (logistic regression) and machine learning models to predict early-onset T2DM.
+## Objectives
 
-## Data Requirements
+Among U.S. adults aged 20+ years with diagnosed T2DM, this study aims to:
 
-The analysis uses the NHANES dataset from the years 2001-2018. You can download the data from [NHANES website](https://www.cdc.gov/nchs/nhanes/index.htm). The specific datasets required include demographic information (`DEMO`), diabetes diagnosis (`DIQ`), and variables such as BMI, acculturation, smoking status, and more.
+1. Estimate the prevalence of early-onset T2DM (onset at age <50.5 years).
+2. Test associations between early-onset T2DM and race/ethnicity, and other hypothesized predictors such as acculturation, smoking, obesity, and marital status.
 
-Once downloaded, the datasets must be merged across all years to perform the analysis.
+## Methods
 
-## Installation
+### Study Design and Participants
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/early-onset-t2dm-analysis.git
-   cd early-onset-t2dm-analysis
-   ```
+Data from the 2001-2018 NHANES were used for this study. NHANES is a cross-sectional survey conducted by the CDC that collects health-related data through interviews, physical exams, and laboratory tests.
 
-2. Install the required R packages:
-   ```r
-   install.packages(c("nhanesA", "dplyr", "ggplot2", "randomForest", "pROC", "caret", "reshape2"))
-   ```
+### Definition of Diabetes
 
-## Data Preprocessing
+Early-onset T2DM is defined as T2DM diagnosed before the age of 50.5 years. The dataset includes individuals who were either diagnosed with diabetes by a healthcare professional or were taking antidiabetic drugs.
 
-To merge and clean the NHANES data across the relevant years, use the following code:
+### Variables Under Study
+
+- **Race/Ethnicity**: Categorized as Non-Hispanic White (NHW), Non-Hispanic Black (NHB), Hispanic, and Other.
+- **Acculturation Score**: Constructed based on country of birth, length of time in the USA, and language spoken at home.
+- **Other Predictors**: Smoking status, marital status, education level, BMI, hypertension, and poverty.
+
+### Data Analysis
+
+Data was analyzed using both traditional statistical methods (stepwise logistic regression) and machine learning approaches to predict early-onset T2DM and assess the role of race/ethnicity and other factors.
+
+### Preprocessing the NHANES Data
+
+Download the NHANES data using the `nhanesA` package, and merge multiple cycles from 2001 to 2018.
 
 ```r
-# Load necessary libraries
+# Install and load necessary packages
+install.packages("nhanesA")
 library(nhanesA)
 library(dplyr)
 
-# Example for downloading and merging data from NHANES (for 2018):
+# Download demographic and diabetes data for 2018 as an example
 demo_2018 <- nhanes('DEMO_I')
 diabetes_2018 <- nhanes('DIQ_I')
 
-# Merge demographic and diabetes data
+# Merge datasets by participant identifier
 merged_2018 <- merge(demo_2018, diabetes_2018, by = "SEQN")
 
-# Repeat for all NHANES cycles from 2001-2018 and bind them together
+# Repeat for other years and combine into a single dataset
 combined_data <- bind_rows(merged_data_list)
 ```
 
-### Creating Variables
+### Variable Creation
+
+Create new variables, including early-onset T2DM, acculturation score, smoking status, and obesity.
 
 ```r
-# Create the early-onset diabetes variable, acculturation score, and other predictors
+# Create early-onset diabetes variable
 combined_data <- combined_data %>%
-  mutate(early_onset_T2DM = ifelse(DIABAGE < 50.5, 1, 0),
-         acculturation_score = case_when(
-           CountryOfBirth == "USA" ~ 5,
-           CountryOfBirth != "USA" & YearsInUSA > 19 ~ 4,
-           CountryOfBirth != "USA" & YearsInUSA <= 19 ~ 3,
-           Language == "English" ~ 2,
-           TRUE ~ 1
-         ),
-         smoking_status = ifelse(Smoking == "Yes", 1, 0),
-         obesity = ifelse(BMI >= 30, 1, 0),
-         marital_status = ifelse(marital_status %in% c("Married", "Partnered"), "Married", "Single"))
+  mutate(early_onset_T2DM = ifelse(DIABAGE < 50.5, 1, 0))
+
+# Create acculturation score
+combined_data <- combined_data %>%
+  mutate(acculturation_score = case_when(
+    CountryOfBirth == "USA" ~ 5,
+    CountryOfBirth != "USA" & YearsInUSA > 19 ~ 4,
+    CountryOfBirth != "USA" & YearsInUSA <= 19 ~ 3,
+    Language == "English" ~ 2,
+    TRUE ~ 1
+  ))
+
+# Recode other variables
+combined_data <- combined_data %>%
+  mutate(
+    smoking_status = ifelse(Smoking == "Yes", 1, 0),
+    obesity = ifelse(BMI >= 30, 1, 0),
+    marital_status = case_when(
+      marital_status %in% c("Married", "Partnered") ~ "Married",
+      marital_status %in% c("Single", "Divorced") ~ "Single"
+    )
+  )
 ```
 
-## Logistic Regression Model
+## Results
 
-The logistic regression model is used to estimate the odds of early-onset T2DM across different predictors.
+### Statistical Analysis
+
+A stepwise logistic regression was performed to assess the association between early-onset T2DM and various predictors.
 
 ```r
-# Run stepwise logistic regression
+# Logistic regression model
 stepwise_model <- glm(early_onset_T2DM ~ race_ethnicity + smoking_status + obesity + acculturation_score +
-                      education_level + marital_status + hypertension, 
+                      education_level + marital_status + hypertension,
                       data = combined_data, family = binomial)
 
+# View the model summary
 summary(stepwise_model)
 ```
 
-## Machine Learning Models
+### Machine Learning Models
 
-This analysis also uses Random Forest as a machine learning model to classify individuals with early-onset T2DM.
+Eleven supervised machine learning algorithms were trained, including Random Forest, Gradient Boosting, and others. Below is an example of a Random Forest implementation.
 
 ```r
-# Load library and split the data
+# Load necessary libraries
 library(randomForest)
+library(caret)
 
-# Split data into training and testing sets
+# Split the data into training and testing sets
 set.seed(123)
 train_indices <- sample(1:nrow(combined_data), 0.7 * nrow(combined_data))
 train_data <- combined_data[train_indices, ]
@@ -112,140 +138,60 @@ rf_model <- randomForest(early_onset_T2DM ~ race_ethnicity + smoking_status + ob
                          education_level + marital_status + hypertension, 
                          data = train_data)
 
-# Predict and evaluate
+# Evaluate the model
 predictions <- predict(rf_model, test_data)
 confusionMatrix(predictions, test_data$early_onset_T2DM)
 ```
 
-## Visualization
+## Plots and Visualizations
 
-### Distribution Plots
-
-To visualize the distribution of early-onset T2DM by race/ethnicity, use this code:
+### Distribution of Early-Onset T2DM by Race/Ethnicity
 
 ```r
+# Load ggplot2 for visualization
 library(ggplot2)
 
+# Plot the distribution of early-onset T2DM by race/ethnicity
 ggplot(combined_data, aes(x = race_ethnicity, fill = factor(early_onset_T2DM))) +
   geom_bar(position = "fill") +
   labs(title = "Proportion of Early-Onset T2DM by Race/Ethnicity",
-       x = "Race/Ethnicity", y = "Proportion", fill = "Early-Onset T2DM") +
+       x = "Race/Ethnicity",
+       y = "Proportion",
+       fill = "Early-Onset T2DM") +
   theme_minimal()
 ```
 
-### Odds Ratios
-
-You can plot the odds ratios from the logistic regression model:
+### ROC Curve for Logistic Regression
 
 ```r
-# Extract coefficients and CIs
-logistic_coeffs <- summary(stepwise_model)$coefficients
-odds_ratios <- exp(logistic_coeffs[, 1])
-conf_intervals <- exp(confint(stepwise_model))
-
-# Create plot data
-odds_data <- data.frame(
-  Variable = rownames(logistic_coeffs),
-  OddsRatio = odds_ratios,
-  LowerCI = conf_intervals[, 1],
-  UpperCI = conf_intervals[, 2]
-)
-
-# Plot odds ratios
-ggplot(odds_data, aes(x = Variable, y = OddsRatio)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = LowerCI, ymax = UpperCI), width = 0.2) +
-  coord_flip() +
-  scale_y_log10() +
-  labs(title = "Odds Ratios and 95% CI from Logistic Regression",
-       x = "Variables", y = "Odds Ratio (log scale)") +
-  theme_minimal()
-```
-
-### Random Forest Feature Importance
-
-To plot the feature importance from the Random Forest model:
-
-```r
-varImpPlot(rf_model, main = "Variable Importance from Random Forest")
-```
-
-### ROC Curve
-
-Plot the ROC curve for the logistic regression or machine learning model:
-
-```r
+# Load pROC for ROC analysis
 library(pROC)
 
-# Logistic regression predictions
+# Predict probabilities for ROC curve
 logit_pred <- predict(stepwise_model, newdata = test_data, type = "response")
 roc_curve <- roc(test_data$early_onset_T2DM, logit_pred)
 
-# Plot ROC
-plot(roc_curve, main = "ROC Curve for Logistic Regression Model")
-auc(roc_curve)
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve for Logistic Regression")
+auc(roc_curve)  # Print the AUC
 ```
 
-### Confusion Matrix
-
-To visualize the confusion matrix for the Random Forest model as a heatmap:
+### Feature Importance from Random Forest
 
 ```r
-conf_df <- as.data.frame(confusionMatrix(predictions, test_data$early_onset_T2DM)$table)
-
-ggplot(conf_df, aes(Prediction, Reference)) +
-  geom_tile(aes(fill = Freq), color = "white") +
-  scale_fill_gradient(low = "lightblue", high = "red") +
-  labs(title = "Confusion Matrix for Random Forest Model", x = "Predicted", y = "Actual") +
-  theme_minimal()
+# Plot variable importance from Random Forest
+varImpPlot(rf_model, main = "Variable Importance from Random Forest")
 ```
 
-### Other Plots
+## Conclusions
 
-#### Acculturation Score by Race/Ethnicity
+The study found that early-onset T2DM is more prevalent among Non-Hispanic Black (NHB) and Hispanic populations compared to Non-Hispanic Whites (NHW). Acculturation score, tobacco smoking, and obesity emerged as important predictors of early-onset T2DM in both males and females.
 
-```r
-ggplot(combined_data, aes(x = race_ethnicity, y = acculturation_score, fill = race_ethnicity)) +
-  geom_boxplot() +
-  labs(title = "Acculturation Score by Race/Ethnicity",
-       x = "Race/Ethnicity", y = "Acculturation Score") +
-  theme_minimal()
-```
+## Acknowledgements
 
-#### BMI Distribution by Early-Onset T2DM
-
-```r
-ggplot(combined_data, aes(x = factor(early_onset_T2DM), y = BMI, fill = factor(early_onset_T2DM))) +
-  geom_boxplot() +
-  labs(title = "BMI Distribution by Early-Onset T2DM Status",
-       x = "Early-Onset T2DM", y = "BMI") +
-  theme_minimal()
-```
-
-#### Correlation Heatmap
-
-```r
-library(reshape2)
-
-# Calculate correlation matrix
-numeric_vars <- combined_data %>% select(BMI, acculturation_score, hypertension, smoking_status)
-corr_matrix <- cor(numeric_vars, use = "complete.obs")
-
-# Plot heatmap
-melted_corr_matrix <- melt(corr_matrix
-
-)
-
-ggplot(melted_corr_matrix, aes(x = Var1, y = Var2, fill = value)) +
-  geom_tile() +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0) +
-  labs(title = "Correlation Matrix Heatmap") +
-  theme_minimal()
-```
+We thank the study participants and acknowledge the contributions of the collaborators and the CDC for providing the NHANES dataset.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the LICENSE file for more details.
 ```
-
-This README file is structured to give clear instructions to users of the repository, including how to replicate the data analysis, run machine learning models, and create visualizations. You can customize it as needed based on your project requirements and any additional analysis you wish to perform.
